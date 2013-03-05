@@ -56,10 +56,10 @@ class ComputerPlayer:
     def _alphaBeta(self,board,depth,color,alpha,beta):
         '''Runs alpha-beta pruning on <board>, probing at <depth>.
         <color>, <alpha>, and <beta> are all used in the recursion,
-        and should be set to self.color, -inf, +inf initially,
-        respectively.
+        and should be set to self.color, -inf, +inf respectively when
+        calling this function for the first time.
 
-        Returns a tuple (heuristic_value, move_pair)
+        Returns a tuple (heuristic_value, move_row_and_column_pair)
         '''
         greatest = lambda x,y:x if x[0] > y[0] else y
         least = lambda x,y:x if x[0] < y[0] else y
@@ -79,7 +79,7 @@ class ComputerPlayer:
                 return self.heuristic(board), (0,0)
             return reduce(greatest if color == self.color else least, moves)
 
-        # If it's our turn
+        # If it's our ply
         if color == self.color:
             greatestValue = float('-inf')
             greatestMove = None
@@ -94,6 +94,7 @@ class ComputerPlayer:
                 alpha = max(alpha, greatestValue)
             return greatestValue, greatestMove
 
+        # The opponent's ply
         leastValue = float('inf')
         leastMove = None
         for move in moves:
