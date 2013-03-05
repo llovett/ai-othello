@@ -53,13 +53,59 @@ class ComputerPlayer:
         self.heuristic = heuristic
         self.plies = plies
 
+    def _alphaBeta(self,board,depth,color,alpha,beta):
+        '''Runs alpha-beta pruning on <board>, probing at <depth>.
+        <color>, <alpha>, and <beta> are all used in the recursion,
+        and should be set to self.color, -inf, +inf initially,
+        respectively.
+
+        Returns a tuple (heuristic_value, move_pair)
+        '''
+        greatest = lambda x,y:x if x[0] > y[0] else y
+        least = lambda x,y:x if x[0] < y[0] else y
+
+        # Calculate all possible moves from this point
+        moves = []
+        for i in xrange(1,othelloBoard.size-1):
+            for j in xrange(1,othelloBoard.size-1):
+                move = board.makeMove(i,j,color)
+                if move:
+                    moves.append( (self.heuristic(move), (i,j)) )
+
+        # depth == 1 is the leaf condition
+        if depth == 1:
+            if len(moves) < 1:
+                # Pass if no moves available
+                return self.heuristic(board), (0,0)
+            return reduce(greatest if color == self.color else least, moves)
+
+        # If it's our turn
+        if color == self.color:
+            greatestValue = float('-inf')
+            greatestMove = None
+            bestMove = None
+            for move in moves:
+                lookahead = _alphaBeta(move,depth-1,color*-1,alpha,beta)[0]
+                if lookahead[0] > greatestValue:
+                    greatestValue = lookahead[0]
+                    greatestMove = lookahead[1]
+                if greatestValue >= beta:
+                    return greatestValue
+                alpha = max(alpha, greatestValue)
+            return greatestValue, greatestMove
+
+        leastValue = float('inf')
+        leastMove = None
+        for move in moves:
+            lookahead = _alphaBeta(move,depth-1,color*-1,alpha,beta)
+            if lookahead[0] < leastValue:
+                leastValue = lookahead[0]
+                leastMove = lookahead[1]
+            if leastValue <= alpha:
+                return leastValue
+            beta = min(beta, leastValue)
+        return leastValue, leastMove
+                
     def chooseMove(self,board):
-        '''This very silly player just returns the first legal move
-        that it finds.'''
-        for i in range(1,othelloBoard.size-1):
-            for j in range(1,othelloBoard.size-1):
-                bcopy = board.makeMove(i,j,self.color)
-                if bcopy:
-                    print 'Heuristic value = ',self.heuristic(bcopy)
-                    return (i,j)
-        return None
+        '''Choose a move based on heuristic values supplied by _alphaBeta'''
+        return self._alphaBeta(board,self.plies,self.color,float('-inf'),float('inf'))[1]
