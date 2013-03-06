@@ -85,12 +85,16 @@ class ComputerPlayer:
             greatestMove = None
             bestMove = None
             for move in moves:
-                lookahead = _alphaBeta(move,depth-1,color*-1,alpha,beta)[0]
+                lookahead = self._alphaBeta(board.makeMove(move[1][0],move[1][1],color),
+                                            depth-1,
+                                            color*-1,
+                                            alpha,
+                                            beta)
                 if lookahead[0] > greatestValue:
                     greatestValue = lookahead[0]
                     greatestMove = lookahead[1]
                 if greatestValue >= beta:
-                    return greatestValue
+                    return greatestValue, greatestMove
                 alpha = max(alpha, greatestValue)
             return greatestValue, greatestMove
 
@@ -98,12 +102,16 @@ class ComputerPlayer:
         leastValue = float('inf')
         leastMove = None
         for move in moves:
-            lookahead = _alphaBeta(move,depth-1,color*-1,alpha,beta)
+            lookahead = self._alphaBeta(board.makeMove(move[1][0],move[1][1],color),
+                                        depth-1,
+                                        color*-1,
+                                        alpha,
+                                        beta)
             if lookahead[0] < leastValue:
                 leastValue = lookahead[0]
                 leastMove = lookahead[1]
             if leastValue <= alpha:
-                return leastValue
+                return leastValue, leastMove
             beta = min(beta, leastValue)
         return leastValue, leastMove
                 
