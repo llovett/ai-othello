@@ -72,49 +72,64 @@ class ComputerPlayer:
                 if move:
                     moves.append( (self.heuristic(move), (i,j)) )
 
+        # Pass if no moves available
+        if len(moves) < 1:
+            return [(self.heuristic(board), (0,0))]
+
         # depth == 1 is the leaf condition
         if depth == 1:
-            if len(moves) < 1:
-                # Pass if no moves available
-                return self.heuristic(board), (0,0)
-            return reduce(greatest if color == self.color else least, moves)
+            return [reduce(greatest if color == self.color else least, moves)]
 
         # If it's our ply
         if color == self.color:
             greatestValue = float('-inf')
             greatestMove = None
-            bestMove = None
+            # lookahead "looks ahead" in the recursion to find the best move
+            lookahead = None
             for move in moves:
                 lookahead = self._alphaBeta(board.makeMove(move[1][0],move[1][1],color),
                                             depth-1,
                                             color*-1,
                                             alpha,
                                             beta)
-                if lookahead[0] > greatestValue:
-                    greatestValue = lookahead[0]
-                    greatestMove = lookahead[1]
+                # Compare heuristic value from the recursive call we
+                # just made to the greatest one we've found so far
+                h = lookahead[-1][0]
+                if h > greatestValue:
+                    greatestValue = h
+                    greatestMove = lookahead[-1][1]
+                # Prune if our greatest value exceeds beta value
                 if greatestValue >= beta:
-                    return greatestValue, greatestMove
+                    lookahead.append( (greatestValue, greatestMove) )
+                    return lookahead
                 alpha = max(alpha, greatestValue)
-            return greatestValue, greatestMove
+            lookahead.append( (greatestValue, greatestMove) )
+            return lookahead
 
         # The opponent's ply
         leastValue = float('inf')
         leastMove = None
+        lookahead = None
         for move in moves:
             lookahead = self._alphaBeta(board.makeMove(move[1][0],move[1][1],color),
                                         depth-1,
                                         color*-1,
                                         alpha,
                                         beta)
-            if lookahead[0] < leastValue:
-                leastValue = lookahead[0]
-                leastMove = lookahead[1]
+            h = lookahead[-1][0]
+            if h < leastValue:
+                leastValue = h
+                leastMove = lookahead[-1][1]
             if leastValue <= alpha:
-                return leastValue, leastMove
+                lookahead.append( (leastValue, leastMove) )
+                return lookahead
             beta = min(beta, leastValue)
-        return leastValue, leastMove
+        lookahead.append( (leastValue, leastMove) )
+        return lookahead
                 
     def chooseMove(self,board):
         '''Choose a move based on heuristic values supplied by _alphaBeta'''
-        return self._alphaBeta(board,self.plies,self.color,float('-inf'),float('inf'))[1]
+        plySequence = self._alphaBeta(board,self.plies,self.color,float('-inf'),float('inf'))
+        print "computers best move sequence is ",plySequence
+
+        return plySequence[-1][1]
