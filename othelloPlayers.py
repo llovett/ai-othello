@@ -81,18 +81,12 @@ class ComputerPlayer:
                 if move:
                     moves.append( (i,j) )
 
-        # if len(moves) < 1:
-        #     print "no moves available...."
-        #     board.display()
-
         # depth == 0 is the leaf condition
         if depth == 0:
-            print "reached a leaf"
             return self.heuristic(board)
 
         # Opponent's ply
         if color != self.color:
-            print "Max player"
             greatestValue = float('-inf')
             for move in moves:
                 # Max heuristic value through recursion
@@ -101,20 +95,17 @@ class ComputerPlayer:
                                             color*-1,
                                             alpha,
                                             beta)
-                print "move %s gives value %f"%(str(move),lookahead)
                 # Compare heuristic value from the recursive call we
                 # just made to the greatest one we've found so far
                 if lookahead > greatestValue:
                     greatestValue = lookahead
                 # Prune if our greatest value exceeds beta value
                 if greatestValue >= beta:
-                    print "** MAX is PRUNING ** ... greatestValue=%f, beta=%f"%(greatestValue,beta)
                     return greatestValue
                 alpha = max(alpha, greatestValue)
             return greatestValue
 
         # Our ply
-        print "Min player"
         leastValue = float('inf')
         for move in moves:
             # Min heuristic value through recursion
@@ -123,11 +114,9 @@ class ComputerPlayer:
                                         color*-1,
                                         alpha,
                                         beta)
-            print "move %s gives value %f"%(str(move),lookahead)
             if lookahead < leastValue:
                 leastValue = lookahead
             if leastValue <= alpha:
-                print "** MIN is PRUNING ** ... leastValue=%f, alpha=%f"%(leastValue,alpha)
                 return leastValue
             beta = min(beta, leastValue)
         return leastValue
@@ -143,7 +132,6 @@ class ComputerPlayer:
             for j in xrange(1,othelloBoard.size-1):
                 move = board.makeMove(i,j,self.color)
                 if move:
-                    print "Min player... trying position %s"%str((i,j))
                     value = self._alphaBeta(move, self.plies-1, self.color*-1, ourAlpha, ourBeta)
                     minUtility = min(value, minUtility)
                     if minUtility <= ourAlpha:
@@ -152,5 +140,4 @@ class ComputerPlayer:
                         ourBeta = minUtility
                         ourMove = (i,j)
 
-        print "heuristic was called %d times"%timesCalled
         return ourMove
