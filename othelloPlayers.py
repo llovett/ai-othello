@@ -45,15 +45,17 @@ def heuristic(board):
     return sum
 
 # Some globals
+bogusHVal = None
 timesCalled = 0
-curVal = 0
 def alexaHeuristic(board):
+    global bogusHVal
+    if bogusHVal is None:
+        bogusHVal = 0
+    else:
+        bogusHVal += 1
     global timesCalled
     timesCalled += 1
-    if timesCalled % 5 == 0:
-        global curVal
-        curVal += 1
-    return curVal
+    return bogusHVal//4
     
 class ComputerPlayer:
     '''Computer player: chooseMove is where the action is.'''
