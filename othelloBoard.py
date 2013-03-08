@@ -164,7 +164,7 @@ class OthelloBoard:
                                   "should the computer look? "))
                 players[i] = othelloPlayers.ComputerPlayer(
                                'compy' + colorNames[i],colorValues[i],
-                               othelloPlayers.heuristic,plies)
+                               othelloPlayers.alexaHeuristic,plies)
 
         # Number of times a "pass" move has been made, in a row
         passes = 0
