@@ -59,11 +59,8 @@ class ComputerPlayer:
         and should be set to self.color, -inf, +inf respectively when
         calling this function for the first time.
 
-        Returns a tuple (heuristic_value, move_row_and_column_pair)
+        Returns the heuristic value of the greatest move we can expect to achieve on <board>.
         '''
-        greatest = lambda x,y:x if x[0] > y[0] else y
-        least = lambda x,y:x if x[0] < y[0] else y
-
         # Calculate all possible moves from this point
         moves = []
         for i in xrange(1,othelloBoard.size-1):
@@ -74,19 +71,17 @@ class ComputerPlayer:
 
         # Pass if no moves available
         if len(moves) < 1:
-            return [(self.heuristic(board), (0,0))]
+            return self.heuristic(board)
 
         # depth == 1 is the leaf condition
         if depth == 1:
-            return [reduce(greatest if color == self.color else least, moves)]
+            return max(moves) if color == self.color else min(moves)
 
         # If it's our ply
         if color == self.color:
             greatestValue = float('-inf')
-            greatestMove = None
-            # lookahead "looks ahead" in the recursion to find the best move
-            lookahead = None
             for move in moves:
+                # Max heuristic value through recursion
                 lookahead = self._alphaBeta(board.makeMove(move[1][0],move[1][1],color),
                                             depth-1,
                                             color*-1,
@@ -94,42 +89,41 @@ class ComputerPlayer:
                                             beta)
                 # Compare heuristic value from the recursive call we
                 # just made to the greatest one we've found so far
-                h = lookahead[-1][0]
-                if h > greatestValue:
-                    greatestValue = h
-                    greatestMove = lookahead[-1][1]
+                if lookahead > greatestValue:
+                    greatestValue = lookahead
                 # Prune if our greatest value exceeds beta value
                 if greatestValue >= beta:
-                    lookahead.append( (greatestValue, greatestMove) )
-                    return lookahead
+                    return greatestValue
                 alpha = max(alpha, greatestValue)
-            lookahead.append( (greatestValue, greatestMove) )
-            return lookahead
+            return greatestValue
 
         # The opponent's ply
         leastValue = float('inf')
-        leastMove = None
-        lookahead = None
         for move in moves:
+            # Min heuristic value through recursion
             lookahead = self._alphaBeta(board.makeMove(move[1][0],move[1][1],color),
                                         depth-1,
                                         color*-1,
                                         alpha,
                                         beta)
-            h = lookahead[-1][0]
-            if h < leastValue:
-                leastValue = h
-                leastMove = lookahead[-1][1]
+            if lookahead < leastValue:
+                leastValue = lookahead
             if leastValue <= alpha:
-                lookahead.append( (leastValue, leastMove) )
-                return lookahead
+                return leastValue
             beta = min(beta, leastValue)
-        lookahead.append( (leastValue, leastMove) )
-        return lookahead
+        return leastValue
                 
     def chooseMove(self,board):
         '''Choose a move based on heuristic values supplied by _alphaBeta'''
-        plySequence = self._alphaBeta(board,self.plies,self.color,float('-inf'),float('inf'))
-        print "computers best move sequence is ",plySequence
-
-        return plySequence[-1][1]
+        # Choose the move that returns the greatest heuristic value through alpha beta
+        bestMoveValue = float('-inf')
+        ourMove = None
+        for i in xrange(1,othelloBoard.size-1):
+            for j in xrange(1,othelloBoard.size-1):
+                move = board.makeMove(i,j,self.color)
+                if move:
+                    value = self._alphaBeta(board, self.plies, self.color, float('-inf'), float('inf'))
+                    if value > bestMoveValue:
+                        bestMoveValue = value
+                        ourMove = (i,j)
+        return ourMove
