@@ -8,6 +8,16 @@ the tournament between players.
 
 Feel free to add additional methods or functions.'''
 
+def availableMoves(board, color):
+    '''Returns all the available moves on the <board> for <color>.'''
+    moves = []
+    for i in xrange(1,othelloBoard.size-1):
+        for j in xrange(1,othelloBoard.size-1):
+            move = board.makeMove(i,j,color)
+            if move:
+                moves.append( (i,j) )
+    return moves
+    
 class HumanPlayer:
     '''Interactive player: prompts the user to make a move.'''
     def __init__(self,name,color):
@@ -36,13 +46,32 @@ class HumanPlayer:
             return move
 
 def heuristic(board):
-    '''This very silly heuristic just adds up all the 1s, -1s, and 0s
-    stored on the othello board.'''
-    sum = 0
-    for i in range(1,othelloBoard.size-1):
-        for j in range(1,othelloBoard.size-1):
-            sum += board.array[i][j]
-    return sum
+    # Reward keeping more moves open
+    blackMoves = availableMoves(board, othelloBoard.black)
+    whiteMoves = availableMoves(board, othelloBoard.white)
+    mobility = len(whiteMoves) - len(blackMoves)
+
+    # Prefer capturing more to fewer tiles
+    boardSum = sum(sum(sq for sq in col) for col in board.array)
+
+    # Reward capturing corners
+    corners = ( board.array[1][1] + board.array[1][othelloBoard.size-2]
+                + board.array[othelloBoard.size-2][1]
+                + board.array[othelloBoard.size-2][othelloBoard.size-2] )
+    # Punish being next to corners
+    cornerNeighbors = ( board.array[1][2] + board.array[2][1] + board.array[2][2]
+                        + board.array[1][othelloBoard.size-3]
+                        + board.array[2][othelloBoard.size-3]
+                        + board.array[2][othelloBoard.size-2]
+                        + board.array[othelloBoard.size-3][1]
+                        + board.array[othelloBoard.size-3][2]
+                        + board.array[othelloBoard.size-2][2]
+                        + board.array[othelloBoard.size-2][othelloBoard.size-3]
+                        + board.array[othelloBoard.size-3][othelloBoard.size-3]
+                        + board.array[othelloBoard.size-3][othelloBoard.size-2] )
+    cornerNeighbors *= -1
+    
+    return boardSum + 2*mobility + 20*(corners + cornerNeighbors)
     
 class ComputerPlayer:
     '''Computer player: chooseMove is where the action is.'''
@@ -61,19 +90,14 @@ class ComputerPlayer:
         Returns the heuristic value of the greatest move we can expect to achieve on <board>.
         '''
         # Calculate all possible moves from this point
-        moves = []
-        for i in xrange(1,othelloBoard.size-1):
-            for j in xrange(1,othelloBoard.size-1):
-                move = board.makeMove(i,j,color)
-                if move:
-                    moves.append( (i,j) )
+        moves = availableMoves(board, color)
 
         # depth == 0 is the leaf condition
         if depth == 0:
             return self.heuristic(board)
 
-        # Opponent's ply
-        if color != self.color:
+        # White's move
+        if color == othelloBoard.white:
             greatestValue = float('-inf')
             for move in moves:
                 # Max heuristic value through recursion
@@ -92,7 +116,7 @@ class ComputerPlayer:
                 alpha = max(alpha, greatestValue)
             return greatestValue
 
-        # Our ply
+        # Black's move
         leastValue = float('inf')
         for move in moves:
             # Min heuristic value through recursion
@@ -113,6 +137,7 @@ class ComputerPlayer:
         # Choose the move that returns the greatest heuristic value through alpha beta
         ourMove = None
         minUtility = float('inf')
+        maxUtility = float('-inf')
         ourAlpha = float('-inf')
         ourBeta = float('inf')
         for i in xrange(1,othelloBoard.size-1):
@@ -120,11 +145,19 @@ class ComputerPlayer:
                 move = board.makeMove(i,j,self.color)
                 if move:
                     value = self._alphaBeta(move, self.plies-1, self.color*-1, ourAlpha, ourBeta)
-                    minUtility = min(value, minUtility)
-                    if minUtility <= ourAlpha:
-                        return (i,j)
-                    if minUtility < ourBeta:
-                        ourBeta = minUtility
-                        ourMove = (i,j)
+                    if self.color == othelloBoard.white:
+                        maxUtility = max(value, maxUtility)
+                        if maxUtility >= ourBeta:
+                            return (i,j)
+                        if maxUtility > ourAlpha:
+                            ourAlpha = maxUtility
+                            ourMove = (i,j)
+                    elif self.color == othelloBoard.black:
+                        minUtility = min(value, minUtility)
+                        if minUtility <= ourAlpha:
+                            return (i,j)
+                        if minUtility < ourBeta:
+                            ourBeta = minUtility
+                            ourMove = (i,j)
 
         return ourMove
