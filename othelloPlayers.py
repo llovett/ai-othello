@@ -43,19 +43,6 @@ def heuristic(board):
         for j in range(1,othelloBoard.size-1):
             sum += board.array[i][j]
     return sum
-
-# Some globals
-bogusHVal = None
-timesCalled = 0
-def alexaHeuristic(board):
-    global bogusHVal
-    if bogusHVal is None:
-        bogusHVal = 0
-    else:
-        bogusHVal += 1
-    global timesCalled
-    timesCalled += 1
-    return bogusHVal//4
     
 class ComputerPlayer:
     '''Computer player: chooseMove is where the action is.'''
